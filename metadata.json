@@ -1,0 +1,4 @@
+{
+  "name": "Employee Check-in System",
+  "description": "A comprehensive attendance management system with Supabase integration, featuring real-time check-in/out, history viewing, and daily statistics."
+}
