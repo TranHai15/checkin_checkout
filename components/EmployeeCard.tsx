@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Employee, Attendance } from '../types';
-import { formatTime, calculateDuration } from '../utils/timeUtils';
-import { LogIn, LogOut, Clock, User, Save } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Employee, Attendance } from "../types";
+import { formatDateTime, calculateDuration } from "../utils/timeUtils";
+import { LogIn, LogOut, Clock, User, Save } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface EmployeeCardProps {
   employee: Employee;
@@ -13,20 +13,20 @@ interface EmployeeCardProps {
   isHistoryView?: boolean;
 }
 
-const EmployeeCard: React.FC<EmployeeCardProps> = ({ 
-  employee, 
-  attendance, 
-  onCheckIn, 
+const EmployeeCard: React.FC<EmployeeCardProps> = ({
+  employee,
+  attendance,
+  onCheckIn,
   onCheckOut,
   onUpdateNote,
-  isHistoryView = false
+  isHistoryView = false,
 }) => {
-  const [note, setNote] = useState(attendance?.note || '');
+  const [note, setNote] = useState(attendance?.note || "");
   const [isNoteDirty, setIsNoteDirty] = useState(false);
 
   // Sync state note with props when props change (e.g. initial load or history switch)
   React.useEffect(() => {
-    setNote(attendance?.note || '');
+    setNote(attendance?.note || "");
     setIsNoteDirty(false);
   }, [attendance]);
 
@@ -34,27 +34,29 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
   const hasCheckedOut = !!attendance?.check_out_time;
 
   const getStatusColor = () => {
-    if (hasCheckedOut) return 'bg-[#3B82F6] border-[#3B82F6]'; // Hoàn thành (Blue)
-    if (hasCheckedIn) return 'bg-[#10B981] border-[#10B981]'; // Đã check-in (Green)
-    return 'bg-[#6B7280] border-[#6B7280]'; // Chưa check-in (Gray)
+    if (hasCheckedOut) return "bg-[#3B82F6] border-[#3B82F6]"; // Hoàn thành (Blue)
+    if (hasCheckedIn) return "bg-[#10B981] border-[#10B981]"; // Đã check-in (Green)
+    return "bg-[#6B7280] border-[#6B7280]"; // Chưa check-in (Gray)
   };
 
   const getStatusText = () => {
-    if (hasCheckedOut) return 'Đã hoàn thành';
-    if (hasCheckedIn) return 'Đang làm việc';
-    return 'Chưa điểm danh';
+    if (hasCheckedOut) return "Đã hoàn thành";
+    if (hasCheckedIn) return "Đang làm việc";
+    return "Chưa điểm danh";
   };
 
   const handleNoteBlur = () => {
     if (attendance && isNoteDirty) {
       onUpdateNote(attendance.id, note);
       setIsNoteDirty(false);
-      toast.success('Đã lưu ghi chú');
+      toast.success("Đã lưu ghi chú");
     }
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden border-l-4 ${getStatusColor()} transition-all hover:shadow-lg`}>
+    <div
+      className={`bg-white rounded-lg shadow-md overflow-hidden border-l-4 ${getStatusColor()} transition-all hover:shadow-lg`}
+    >
       {/* Header Card */}
       <div className="p-4 border-b border-gray-100 flex justify-between items-start">
         <div className="flex items-center space-x-3">
@@ -63,10 +65,14 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
           </div>
           <div>
             <h3 className="font-bold text-gray-800">{employee.name}</h3>
-            <p className="text-xs text-gray-500">{employee.email || 'No email'}</p>
+            <p className="text-xs text-gray-500">
+              {employee.email || "No email"}
+            </p>
           </div>
         </div>
-        <span className={`text-xs px-2 py-1 rounded-full text-white ${getStatusColor()}`}>
+        <span
+          className={`text-xs px-2 py-1 rounded-full text-white ${getStatusColor()}`}
+        >
           {getStatusText()}
         </span>
       </div>
@@ -75,18 +81,26 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
       <div className="p-4 grid grid-cols-2 gap-4 bg-gray-50">
         <div className="flex flex-col">
           <span className="text-xs text-gray-500 mb-1 flex items-center">
-            <LogIn className="w-3 h-3 mr-1" /> Giờ vào
+            <LogIn className="w-3 h-3 mr-1" /> Thời gian vào
           </span>
-          <span className={`font-mono font-medium ${hasCheckedIn ? 'text-gray-900' : 'text-gray-400'}`}>
-            {formatTime(attendance?.check_in_time || null)}
+          <span
+            className={`font-mono text-xs font-medium ${
+              hasCheckedIn ? "text-gray-900" : "text-gray-400"
+            }`}
+          >
+            {formatDateTime(attendance?.check_in_time || null)}
           </span>
         </div>
         <div className="flex flex-col">
           <span className="text-xs text-gray-500 mb-1 flex items-center">
-            <LogOut className="w-3 h-3 mr-1" /> Giờ ra
+            <LogOut className="w-3 h-3 mr-1" /> Thời gian ra
           </span>
-          <span className={`font-mono font-medium ${hasCheckedOut ? 'text-gray-900' : 'text-gray-400'}`}>
-            {formatTime(attendance?.check_out_time || null)}
+          <span
+            className={`font-mono text-xs font-medium ${
+              hasCheckedOut ? "text-gray-900" : "text-gray-400"
+            }`}
+          >
+            {formatDateTime(attendance?.check_out_time || null)}
           </span>
         </div>
       </div>
@@ -96,7 +110,13 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
         <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 text-center">
           <p className="text-xs text-blue-700 flex items-center justify-center">
             <Clock className="w-3 h-3 mr-1" />
-            Tổng thời gian: <span className="font-bold ml-1">{calculateDuration(attendance?.check_in_time || null, attendance?.check_out_time || null)}</span>
+            Tổng thời gian:{" "}
+            <span className="font-bold ml-1">
+              {calculateDuration(
+                attendance?.check_in_time || null,
+                attendance?.check_out_time || null
+              )}
+            </span>
           </p>
         </div>
       )}
@@ -109,20 +129,24 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
               onClick={() => onCheckIn(employee.id)}
               disabled={hasCheckedIn}
               className={`flex items-center justify-center py-2 px-3 rounded-md text-sm font-medium transition-colors
-                ${hasCheckedIn 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                  : 'bg-[#10B981] text-white hover:bg-emerald-600 shadow-sm'}`}
+                ${
+                  hasCheckedIn
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-[#10B981] text-white hover:bg-emerald-600 shadow-sm"
+                }`}
             >
               <LogIn className="w-4 h-4 mr-2" /> Check In
             </button>
-            
+
             <button
               onClick={() => attendance && onCheckOut(attendance.id)}
               disabled={!hasCheckedIn || hasCheckedOut}
               className={`flex items-center justify-center py-2 px-3 rounded-md text-sm font-medium transition-colors
-                ${!hasCheckedIn || hasCheckedOut 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                  : 'bg-[#EF4444] text-white hover:bg-red-600 shadow-sm'}`}
+                ${
+                  !hasCheckedIn || hasCheckedOut
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-[#EF4444] text-white hover:bg-red-600 shadow-sm"
+                }`}
             >
               <LogOut className="w-4 h-4 mr-2" /> Check Out
             </button>
@@ -143,9 +167,9 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
             rows={2}
           />
           {isNoteDirty && !isHistoryView && (
-             <span className="absolute bottom-2 right-2 text-[10px] text-orange-500 flex items-center animate-pulse">
-               <Save className="w-3 h-3 mr-1" /> Chưa lưu
-             </span>
+            <span className="absolute bottom-2 right-2 text-[10px] text-orange-500 flex items-center animate-pulse">
+              <Save className="w-3 h-3 mr-1" /> Chưa lưu
+            </span>
           )}
         </div>
       </div>
