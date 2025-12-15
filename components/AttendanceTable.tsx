@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { Employee, Attendance, AttendanceTab } from "../types";
 import { formatDateTime } from "../utils/timeUtils";
-import { LogIn, LogOut, CheckCircle2, Search, Filter } from "lucide-react";
+import {
+  LogIn,
+  LogOut,
+  CheckCircle2,
+  Search,
+  Filter,
+  Copy,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 interface AttendanceTableProps {
@@ -59,6 +66,85 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
   const filteredEmployees = getFilteredData();
 
+  // COPY TO CLIPBOARD LOGIC
+  const handleCopyToClipboard = () => {
+    if (filteredEmployees.length === 0) {
+      toast.error("Không có dữ liệu để sao chép");
+      return;
+    }
+
+    // Lấy ngày hiện tại làm tiêu đề báo cáo
+    const todayStr = new Date().toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    let text = `📅 *BÁO CÁO CHẤM CÔNG (${todayStr})*\n`;
+
+    // Thêm ngữ cảnh của Tab hiện tại vào tiêu đề
+    if (activeTab === "checkin") text += `(Danh sách chưa đến)\n`;
+    else if (activeTab === "checkout") text += `(Danh sách đang làm việc)\n`;
+
+    text += `--------------------------------\n`;
+
+    filteredEmployees.forEach((emp, index) => {
+      const att = attendances.find((a) => a.employee_id === emp.id);
+      const idx = index + 1;
+
+      // Format: 1. Tên Nhân Viên
+      let line = `${idx}. ${emp.name}`;
+
+      if (!att?.check_in_time) {
+        // Chưa check-in
+        line += `: ❌ Chưa đến`;
+      } else {
+        // Đã check-in
+        const checkInDate = new Date(att.check_in_time);
+
+        // Lấy ngày tháng (dd/mm)
+        const dateStr = checkInDate.toLocaleDateString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+
+        // Lấy giờ phút gọn gàng (HH:mm)
+        const inTime = checkInDate.toLocaleTimeString("vi-VN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        let outTime = "...";
+        if (att.check_out_time) {
+          outTime = new Date(att.check_out_time).toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+
+        // 1. Nguyễn Văn A: 26/10 08:00 - 17:30
+        line += `: ${dateStr} ${inTime} - ${outTime}`;
+
+        // Thêm trạng thái nếu cần
+        if (att.status === "late") line += ` (Trễ)`;
+        if (att.note) line += ` [${att.note}]`;
+      }
+
+      text += line + "\n";
+    });
+
+    // Footer tổng kết
+    const presentCount = filteredEmployees.filter(
+      (e) => attendances.find((a) => a.employee_id === e.id)?.check_in_time
+    ).length;
+    text += `--------------------------------\n`;
+    text += `Tổng cộng: ${filteredEmployees.length} nhân viên (Có mặt: ${presentCount})`;
+
+    navigator.clipboard
+      .writeText(text)
+      .then(() => toast.success("Đã sao chép danh sách vào bộ nhớ tạm!"))
+      .catch(() => toast.error("Lỗi khi sao chép"));
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-220px)]">
       {/* Controls Header */}
@@ -73,7 +159,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            Chưa Check-in
+            Chưa đến
             <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full border border-gray-200">
               {
                 employees.filter(
@@ -92,7 +178,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            Chờ Check-out
+            Đang làm
             <span className="ml-2 bg-indigo-100 text-indigo-600 text-xs px-1.5 py-0.5 rounded-full border border-indigo-200">
               {
                 employees.filter((e) => {
@@ -114,16 +200,28 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Tìm nhân viên..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-          />
+        {/* Right Controls: Search & Copy */}
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          {/* Copy Button */}
+          <button
+            onClick={handleCopyToClipboard}
+            className="flex items-center justify-center p-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm"
+            title="Sao chép danh sách hiển thị để gửi Zalo"
+          >
+            <Copy className="w-5 h-5" />
+          </button>
+
+          {/* Search */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Tìm nhân viên..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+          </div>
         </div>
       </div>
 
